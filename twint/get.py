@@ -14,7 +14,7 @@ from urllib.parse import quote
 
 from . import url
 from .output import Tweets, Users
-from .token import TokenExpiryException
+from .twtoken import TokenExpiryException
 
 import logging as logme
 
@@ -115,22 +115,21 @@ async def RequestUrl(config, init):
         ("x-guest-token", config.Guest_token),
     ]
 
-    # TODO : do this later
     if config.Profile:
-        logme.debug(__name__ + ":RequestUrl:Profile")
+        logme.debug(__name__ + ':RequestUrl:Profile')
         _url, params, _serialQuery = url.SearchProfile(config, init)
     elif config.TwitterSearch:
-        logme.debug(__name__ + ":RequestUrl:TwitterSearch")
+        logme.debug(__name__ + ':RequestUrl:TwitterSearch')
         _url, params, _serialQuery = await url.Search(config, init)
     else:
         if config.Following:
-            logme.debug(__name__ + ":RequestUrl:Following")
+            logme.debug(__name__ + ':RequestUrl:Following')
             _url = await url.Following(config.Username, init)
         elif config.Followers:
-            logme.debug(__name__ + ":RequestUrl:Followers")
+            logme.debug(__name__ + ':RequestUrl:Followers')
             _url = await url.Followers(config.Username, init)
         else:
-            logme.debug(__name__ + ":RequestUrl:Favorites")
+            logme.debug(__name__ + ':RequestUrl:Favorites')
             _url = await url.Favorites(config.Username, init)
         _serialQuery = _url
 
@@ -169,17 +168,21 @@ def ForceNewTorIdentity(config):
 
 async def Request(_url, connector=None, params=None, headers=None):
     logme.debug(__name__ + ":Request:Connector")
+    #connector = aiohttp.TCPConnector(proxy='http://127.0.0.1:7890')
     async with aiohttp.ClientSession(
         connector=connector, headers=headers, trust_env=True
     ) as session:
+        #proxies = {'http': 'http://127.0.0.1:7890', 'https': 'http://127.0.0.1:7890'}
+        #session.proxies.update(proxies)
+        
         return await Response(session, _url, params)
 
 
 async def Response(session, _url, params=None):
-    logme.debug(__name__ + ":Response")
+    logme.debug(__name__ + ":Response"+ _url)
     with timeout(120):
         async with session.get(
-            _url, ssl=True, params=params, proxy=httpproxy
+            _url, ssl=True, params=params, proxy="http://127.0.0.1:7890"
         ) as response:
             resp = await response.text()
             if (
@@ -202,7 +205,7 @@ async def RandomUserAgent(wa=None):
 async def Username(_id, bearer_token, guest_token):
     logme.debug(__name__ + ":Username")
     _dct = {"userId": _id, "withHighlightedLabel": False}
-    _url = "https://api.twitter.com/graphql/B9FuNQVmyx32rdbIPEZKag/UserByRestId?variables={}".format(
+    _url = "https://api.x.com/graphql/B9FuNQVmyx32rdbIPEZKag/UserByRestId?variables={}".format(
         dict_to_url(_dct)
     )
     _headers = {
@@ -229,7 +232,12 @@ async def Tweet(url, config, conn):
 async def User(username, config, conn, user_id=False):
     logme.debug(__name__ + ":User")
     _dct = {"screen_name": username, "withHighlightedLabel": False}
-    _url = f"https://api.twitter.com/1.1/users/show.json?screen_name={username}"
+    #_url = f"https://api.x.com/1.1/users/show.json?screen_name={username}"
+    #_dct = {'screen_name': _id, 'withSafetyModeUserFields': False, 'withSuperFollowsUserFields': False}
+    #_url = "https://twitter.com/i/api/graphql/Bhlf1dYJ3bYCKmLfeEQ31A/UserByScreenName?variables={}".format(
+    #    dict_to_url(_dct))
+    _url = 'https://api.twitter.com/graphql/jMaTS-_Ea8vh9rpKggJbCQ/UserByScreenName?variables={}' \
+        .format(dict_to_url(_dct))
     _headers = {
         "authorization": config.Bearer_token,
         "x-guest-token": config.Guest_token,
@@ -239,7 +247,7 @@ async def User(username, config, conn, user_id=False):
         j_r = loads(response)
         if user_id:
             try:
-                _id = j_r["id_str"]
+                _id = j_r['data']['user']['rest_id']
                 return _id
             except KeyError as e:
                 logme.critical(__name__ + ":User:" + str(e))
@@ -268,17 +276,17 @@ async def Multi(feed, config, conn):
                 if config.Favorites or config.Profile_full:
                     logme.debug(__name__ + ":Multi:Favorites-profileFull")
                     link = tweet.find("a")["href"]
-                    url = f"https://twitter.com{link}&lang=en"
+                    url = f"https://x.com{link}&lang=en"
                 elif config.User_full:
                     logme.debug(__name__ + ":Multi:userFull")
                     username = tweet.find("a")["name"]
-                    url = f"http://twitter.com/{username}?lang=en"
+                    url = f"http://x.com/{username}?lang=en"
                 else:
                     logme.debug(__name__ + ":Multi:else-url")
                     link = tweet.find(
                         "a", "tweet-timestamp js-permalink js-nav js-tooltip"
                     )["href"]
-                    url = f"https://twitter.com{link}?lang=en"
+                    url = f"https://x.com{link}?lang=en"
 
                 if config.User_full:
                     logme.debug(__name__ + ":Multi:user-full-Run")

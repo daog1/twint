@@ -8,8 +8,8 @@ from asyncio import (
 )
 
 from . import datelock, feed, get, output, verbose, storage
-from .token import TokenExpiryException
-from . import token
+from .twtoken import TokenExpiryException
+from . import twtoken
 from .storage import db
 from .feed import NoMoreTweetsException
 
@@ -42,7 +42,7 @@ class Twint:
         self.config.Bearer_token = bearer
         # TODO might have to make some adjustments for it to work with multi-treading
         # USAGE : to get a new guest token simply do `self.token.refresh()`
-        self.token = token.Token(config)
+        self.token = twtoken.Token(config)
         self.token.refresh()
         self.conn = db.Conn(config.Database)
         self.d = datelock.Set(self.config.Until, self.config.Since)

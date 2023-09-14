@@ -15,7 +15,7 @@ from . import run
 
 _levels = {"info": logging.INFO, "debug": logging.DEBUG}
 
-_level = os.getenv("TWINT_DEBUG", "info")
+_level ="debug" #os.getenv("TWINT_DEBUG", "info")
 _logLevel = _levels[_level]
 
 if _level == "debug":

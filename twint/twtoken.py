@@ -23,10 +23,12 @@ class Token:
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101 Firefox/78.0"
             }
         )
+        proxies = {'http': 'http://127.0.0.1:7890', 'https': 'http://127.0.0.1:7890'}
+        self._session.proxies.update(proxies)
         self.config = config
         self._retries = 5
         self._timeout = 10
-        self.url = "https://twitter.com"
+        self.url = "https://x.com"
 
     def _request(self):
         for attempt in range(self._retries + 1):
@@ -64,7 +66,7 @@ class Token:
     def refresh(self):
         logme.debug("Retrieving guest token")
         res = self._request()
-        match = re.search(r'\("gt=(\d+);', res.text)
+        match = re.search(r'\"gt=(\d+);', res.text)
         if match:
             logme.debug("Found guest token in HTML")
             self.config.Guest_token = str(match.group(1))
